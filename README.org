@@ -97,6 +97,7 @@ We can define our own mode specific pairs like that.
 Face of overlay created by chairs.
 ** Demos
 *** ~chairs-rewrap~
-[[https://github.com/user-attachments/assets/4cea3f21-7d71-45b2-a79a-6518f1a0063c][chairs-rewrap demo]]
+[[https://github.com/user-attachments/assets/addce28d-d460-40d1-9bc3-a7e0b77615ec][chairs-rewrap demo]]
 *** ~chairs-add~
-[[https://github.com/user-attachments/assets/addce28d-d460-40d1-9bc3-a7e0b77615ec][chairs-add demo]]
+[[https://github.com/user-attachments/assets/4cea3f21-7d71-45b2-a79a-6518f1a0063c][chairs-add demo]]
+
