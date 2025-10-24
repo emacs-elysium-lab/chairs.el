@@ -1,6 +1,6 @@
 * chairs README                                                                 :README:
 ** What is chairs
-Chairs means CHAnging pAIRS.
+Chairs means CHAnge pAIRS.
 
 Chairs provides functionality of changing pairs or adding simple pairs commands,
 based on [expand-region](https://github.com/magnars/expand-region.el).
