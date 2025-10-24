@@ -1,0 +1,102 @@
+#+title: CHAnge or add surrounding pAIRS
+Copyright (C) 2025 Ditto <ditto@mf.me>
+
+Package-Version: 0.1.0
+Keywords: extensions, convenience
+Package-Requires: ((emacs "28.1") (expand-region "0.7"))
+Homepage: https://github.com/emacs-elysium-lab/chairs.el
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* chairs README                                                                 :README:
+** What is chairs
+Chairs means CHAnging pAIRS.
+
+Chairs provides functionality of changing pairs or adding simple pairs commands,
+based on [expand-region](https://github.com/magnars/expand-region.el).
+** Usage
+*** Installation
+**** manual
+Add to ~load-path~
+#+begin_src elisp
+  (add-to-list 'load-path "/path/to/chairs.el/")
+  (require 'chairs)
+#+end_src
+*** Commands
+Chairs provides two commands: ~chairs-rewrap~ and ~chairs-add~
+
+~chairs-rewrap~ is to change pairs of current sexp, ~chairs-add~ is to add pairs
+around current sexp.
+
+
+Use with [[https://github.com/AmaiKinono/puni][puni]].
+For complex pairs like html tags, we can use ~puni-squeeze~ instead, and for
+deleting pairs, we can use ~puni-splice~.
+
+There are a few examples
+**** ~chairs-rewrap~
+#+begin_src elisp
+  (defun foo (arg)
+    (bar (cons "fo|o-bar" bar-foo)))
+#+end_src
+~|~ means cursor postion.
+
+When we use ~chairs-rewrap~ command, it will ask to insert a char first, and after we
+insert =(= or =)=, the code snippet above will turn into:
+
+#+begin_src elisp
+  (defun foo (arg)
+    (bar (cons (fo|o-bar) bar-foo)))
+#+end_src
+**** chairs-add
+#+begin_src elisp
+  (defun foo (arg)
+    (bar (cons "foo-bar" ba|r-foo)))
+#+end_src
+This time we use ~chairs-add~ instead, after we insert =(= or =)=:
+#+begin_src elisp
+  (defun foo (arg)
+    (bar (cons "foo-bar" (ba|r-foo))))
+#+end_src
+*** User options
+**** keybindings
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-r") #'chairs-rewrap)
+  (global-set-key (kbd "s-s") #'chairs-add)
+#+end_src
+**** ~chairs-pairs-alist~
+~chair-pairs-alist~ is an alist for defining pairs
+#+begin_src elisp
+  (setq chair-pairs-alist
+  '((?\( . ?\))
+    (?\[ . ?\])
+    (?\{ . ?\})
+    (?\< . ?\>)
+    (?\" . ?\")
+    (?\' . ?\')
+    (?\` . ((t . ?\`)
+            (emacs-lisp-mode . ?\')))))
+#+end_src
+We can define our own mode specific pairs like that.
+
+=C-h f= ~chair-pairs-alist~ for details.
+**** ~chairs-highlight-pairs~
+~chairs-highlight-pairs~ is a boolean to enable highlight pairs or region when invoke
+~chairs-rewrap~ and ~chair-add~ command. See Demos section for more information.
+**** ~chairs-overlay-highlight-face~
+Face of overlay created by chairs.
+** Demos
+*** ~chairs-rewrap~
+[[file:demos/chairs-rewrap.mov][chairs-rewrap demo]]
+*** ~chairs-add~
+[[file:demos/chairs-add.mov][chairs-add demo]]

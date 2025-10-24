@@ -102,15 +102,15 @@
 ;;
 ;; **** ~chairs-highlight-pairs~
 ;; ~chairs-highlight-pairs~ is a boolean to enable highlight pairs or region when invoke
-;; ~chairs-rewrap~ and ~chair-add~ command. See Demo section for more information.
+;; ~chairs-rewrap~ and ~chair-add~ command. See Demos section for more information.
 ;;
 ;; **** ~chairs-overlay-highlight-face~
 ;; Face of overlay created by chairs.
-;; ** Demo
+;; ** Demos
 ;; *** ~chairs-rewrap~
-;; [[][chairs-rewrap demo]]
+;; [[file:demos/chairs-rewrap.mov][chairs-rewrap demo]]
 ;; *** ~chairs-add~
-;; [[][chairs-add demo]]
+;; [[file:demos/chairs-add.mov][chairs-add demo]]
 
 
 ;;; Code:
