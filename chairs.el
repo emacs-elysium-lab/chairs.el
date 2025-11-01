@@ -164,10 +164,8 @@ If REGION-END is non nil, `make-overlay' between BOUNDS and REGION-END instead."
         (add-to-list 'chairs--overlay-list overlay)))))
 
 (defun chairs--overlay-clear ()
-  "Clear overlay created by chairs."
-  (while (and chairs-highlight-pairs
-              chairs--overlay-list)
-    (delete-overlay (pop chairs--overlay-list))))
+  (mapc #'delete-overlay chairs--overlay-list)
+  (setq chairs--overlay-list nil))
 
 (defun chairs--get-closing-from-opening (char)
   "Return char of closing pair according to CHAR.
@@ -240,34 +238,43 @@ When there's an active balanced region, rewrap it surroundings
 with insert pairs."
   (interactive)
   (let* ((orig-point (point))
+         (transient-mark-mode t)
          (bounds-around
           (save-mark-and-excursion
             (unless (use-region-p)
               (er--expand-region-1)
               (while (not (or (= (point) (point-min))
-                                 (cl-some (lambda (x)
-                                            (and (= (char-after) (car x))
-                                                 (= (char-before (region-end))
-                                                    (chairs--get-closing-from-opening (car x)))))
-                                          chairs-pairs-alist)))
-                (er--expand-region-1)))
-            (bounds-of-thing-at-point 'region)))
-         (bounds-inside (cons (1+ (car bounds-around)) (1- (cdr bounds-around)))))
-    (chairs--general bounds-around bounds-inside)
-    (goto-char orig-point)))
+                              (cl-some (lambda (x)
+                                         (and (= (char-after) (car x))
+                                              (= (char-before (region-end))
+                                                 (chairs--get-closing-from-opening (car x)))))
+                                       chairs-pairs-alist)))
+                (er--expand-region-1))
+              (bounds-of-thing-at-point 'region)))))
+         (unless (and bounds-around
+                      (> (cdr bounds-around) (car bounds-around)))
+           (user-error "CHAIRS: Could not determine a region to rewrap"))
+         (let ((bounds-inside (cons (1+ (car bounds-around)) (1- (cdr bounds-around)))))
+           (chairs--general bounds-around bounds-inside)
+           (goto-char orig-point))))
 
 ;;;###autoload
 (defun chairs-add ()
   "Add parirs to region or sexp at point or region if active."
   (interactive)
-  (let ((orig-point (point))
-        (bounds-at-pt
-         (save-mark-and-excursion
-           (unless (use-region-p)
-             (er--expand-region-1))
-           (bounds-of-thing-at-point 'region))))
+  (let* ((orig-point (point))
+         (transient-mark-mode t)
+         (bounds-at-pt
+          (save-mark-and-excursion
+            (unless (use-region-p)
+              (er--expand-region-1))
+            (bounds-of-thing-at-point 'region))))
+
+    (unless (and bounds-at-pt (> (cdr bounds-at-pt) (car bounds-at-pt)))
+      (user-error "CHAIRS: No available sexp!"))
     (chairs--general bounds-at-pt bounds-at-pt)
-    (goto-char orig-point)))
+    ;; move to origial position as new char of width 1 has been inserted
+    (goto-char (1+ orig-point))))
 
 (provide 'chairs)
 ;;; chairs.el ends here
