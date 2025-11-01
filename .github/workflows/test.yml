@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  SETUP_PACKAGE: |
+    (require 'package)
+    (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\"))
+    (package-initialize)
+  INSTALL_DEPS: |
+    $SETUP_PACKAGE
+    (package-refresh-contents)
+    (package-install 'expand-region)
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        emacs_version:
+          - '30.2'
+          - 'snapshot'
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Emacs
+      uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+
+    - name: Install dependencies
+      run: |
+        emacs --batch \
+          --eval "$INSTALL_DEPS"
+
+    - name: Run tests
+      run: |
+        emacs --batch \
+          --eval "$SETUP_PACKAGE
+          -L . \
+          -l ert \
+          -l chairs-test.el \
+          -f ert-run-tests-batch-and-exit
+
+    - name: Byte compile
+      run: |
+        emacs --batch \
+          --eval "$SETUP_PACKAGE" \
+          -L . \
+          --eval "(setq byte-compile-error-on-warn t)" \
+          -f batch-byte-compile chairs.el
+
+    - name: Check package
+      run: |
+        emacs --batch \
+          --eval "$SETUP_PACKAGE" \
+          --eval "(package-refresh-contents)" \
+          --eval "(package-install 'expand-region)" \
+          --eval "(package-install-file \"chairs.el\")"
