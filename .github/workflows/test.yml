@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Minimal, consistent package init used by EVERY Emacs call
+  # Bootstrap used in EVERY Emacs invocation
   ELCI: |
     (setq package-enable-at-startup nil
           package-quickstart nil
@@ -18,15 +18,26 @@ env:
     (add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/") t)
     (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
     (package-initialize)
-    ;; Ensure installed packages are actually on `load-path`
     (when (fboundp 'package-activate-all)
       (package-activate-all))
-  # Install deps (assumes ELCI already eval'd in the same process)
-  INSTALL_DEPS: |
-    (unless (package-installed-p 'expand-region)
-      (package-refresh-contents)
-      (package-install 'expand-region))
 
+  # Ensure expand-region is installed, activated, and loadable
+  ENSURE_ER: |
+    (let ((pkg 'expand-region))
+      (unless (package-installed-p pkg)
+        (package-refresh-contents)
+        (package-install pkg))
+      ;; activate + require; if anything odd, nuke cache and retry once
+      (condition-case err
+          (progn (when (fboundp 'package-activate) (package-activate pkg))
+                 (require pkg))
+        (error
+         (when (file-directory-p package-user-dir)
+           (delete-directory package-user-dir t))
+         (package-refresh-contents)
+         (package-install pkg)
+         (when (fboundp 'package-activate) (package-activate pkg))
+         (require pkg))))
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -42,7 +53,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .elpa
-          key: ${{ runner.os }}-elpa-${{ matrix.emacs_version }}
+          key: ${{ runner.os }}-elpa-${{ matrix.emacs_version }}-${{ hashFiles('.github/workflows/**') }}
           restore-keys: |
             ${{ runner.os }}-elpa-
 
@@ -51,29 +62,29 @@ jobs:
         with:
           version: ${{ matrix.emacs_version }}
 
-      - name: Install dependencies (expand-region)
+      - name: Sanity (where is expand-region?)
         run: |
           emacs -Q --batch \
             --eval "$ELCI" \
-            --eval "$INSTALL_DEPS" \
-            --eval "(message \"expand-region at: %s\" (or (locate-library \"expand-region\") \"<nil>\"))"
+            --eval "$ENSURE_ER" \
+            --eval "(message \"expand-region at: %s\" (locate-library \"expand-region\"))"
 
       - name: Run tests
         run: |
           emacs -Q --batch \
             --eval "$ELCI" \
-            --eval "(or (require 'expand-region nil t) (error \"expand-region missing\"))" \
+            --eval "$ENSURE_ER" \
             -L . \
             -l ert \
             -l chairs.el \
             -l chairs-test.el \
             -f ert-run-tests-batch-and-exit
 
-      - name: Byte compile
+      - name: Byte compile (warnings are errors)
         run: |
           emacs -Q --batch \
             --eval "$ELCI" \
-            --eval "(or (require 'expand-region nil t) (error \"expand-region missing\"))" \
+            --eval "$ENSURE_ER" \
             --eval "(setq byte-compile-error-on-warn t)" \
             -L . \
             -f batch-byte-compile chairs.el
@@ -82,5 +93,6 @@ jobs:
         run: |
           emacs -Q --batch \
             --eval "$ELCI" \
-            --eval "(package-refresh-contents)" \
-            --eval "(package-install-file \"chairs.el\")"
+            --eval "$ENSURE_ER" \
+            --eval "(package-install-file \"chairs.el\")" \
+            --eval "(message \"Installed chairs from file OK\")"
