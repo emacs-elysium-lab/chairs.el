@@ -10,12 +10,17 @@ on:
 env:
   # Minimal, consistent package init used by EVERY Emacs call
   ELCI: |
-    (setq package-user-dir (expand-file-name ".elpa" default-directory)
-          package-check-signature nil)
+    (setq package-enable-at-startup nil
+          package-quickstart nil
+          package-check-signature nil
+          package-user-dir (expand-file-name ".elpa" default-directory))
     (require 'package)
     (add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/") t)
     (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
     (package-initialize)
+    ;; Ensure installed packages are actually on `load-path`
+    (when (fboundp 'package-activate-all)
+      (package-activate-all))
   # Install deps (assumes ELCI already eval'd in the same process)
   INSTALL_DEPS: |
     (unless (package-installed-p 'expand-region)
